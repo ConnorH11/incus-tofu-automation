@@ -1,0 +1,30 @@
+#cloud-config
+users:
+  - name: connor
+    shell: /bin/bash
+    groups: sudo
+    sudo: ALL=(ALL) NOPASSWD:ALL
+
+package_update: true
+packages:
+  - curl
+  - openssh-server
+  - ca-certificates
+
+runcmd:
+  # SSH Key Setup
+  - mkdir -p /home/connor/.ssh
+  - curl -fsSL https://github.com/ConnorH11.keys -o /home/connor/.ssh/authorized_keys_temp
+  - if [ -s /home/connor/.ssh/authorized_keys_temp ]; then cat /home/connor/.ssh/authorized_keys_temp >> /home/connor/.ssh/authorized_keys; fi
+  - rm -f /home/connor/.ssh/authorized_keys_temp
+  - chown -R connor:connor /home/connor/.ssh
+  - chmod 700 /home/connor/.ssh
+  - chmod 600 /home/connor/.ssh/authorized_keys
+
+  # SSH Service
+  - systemctl enable ssh
+  - systemctl restart ssh
+
+  # Tailscale
+  - curl -fsSL https://tailscale.com/install.sh | sh
+  - tailscale up --authkey=${tailscale_auth_key} --hostname=${hostname}
